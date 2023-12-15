@@ -1,0 +1,130 @@
+{% extends "admin/layout.html" %}
+{% block contents %}
+<style>
+    .bootstrap-tagsinput {
+        width: 100%;
+        min-height: 200px;
+        padding: 10px;
+        line-height: 40px;
+    }
+
+    .bootstrap-tagsinput .tag {
+        color: white;
+        display: inline-block;
+        background: #1D375F;
+        padding-left: 10px;
+        padding-right: 10px;
+        padding-bottom: 2px;
+        line-height: 40px;
+        margin: 2px;
+    }
+</style>
+<div class="card">
+    <div class="card-body">
+
+        <div class="form-group row">
+            <div class="col-lg-12">
+                <b>사용자 그룹 정보</b>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-lg-3 col-form-label form-control-label">그룹 이름</label>
+            <div class="col-lg-9">
+                <input class="form-control" type="text" id="group_name" name="group_name" value="{{usergroup_item.name}}" />
+            </div>
+        </div>
+        
+        
+        <div class="form-group row">
+            <div class="col-lg-12" style="margin-top:40px;">
+                <b>그룹 지정</b>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-lg-3 col-form-label form-control-label">직접 추가</label>
+            <div class="col-lg-8">
+                <select class="selectize" id="user_id">
+                    {% for k, v in users.items() %}
+                    <option value="{{k}}">{{v}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-1">
+                <button type="button" onclick="add_user();" style="width: 100%;" class="btn btn-success">추가</button>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-lg-3 col-form-label form-control-label">사용자 목록</label>
+            <div class="col-lg-9">
+                <input id="users" name="users" class="div-tag">
+            </div>
+        </div>
+
+        
+        <div class="form-group row">
+            <div class="col-lg-12" style="text-align: center;">
+                <input type="button" class="btn btn-primary" value="생성" onclick="create_or_update_usergroup();">
+                <input type="button" class="btn btn-secondary" value="돌아가기" onclick="history.go(-1)">
+            </div>
+        </div>
+        
+    </div><!-- card body -->
+</div> <!-- card-outline -->
+
+<script>
+    function add_user() {
+        item = $("#user_id");
+        $('.div-tag').tagsinput('add', {id:item.val(), label:item.text()});
+    }
+
+    function create_or_update_usergroup() {
+        params = {
+            'usergroup_id': {{usergroup_item.id}},
+            'group_name': $("#group_name").val(),
+            // 'user_type': parseInt($("#user_type").val()),
+            // 'rule_id': parseInt($("#rule_id").val()),
+            'users': $("#users").val() != '' ? $("#users").val().split(',') : []
+        };
+
+        $.ajax({
+            url: "/usergroup/api/create_or_update",
+            type: "post",
+            accept: "application/json",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(params),
+            dataType: "json",
+            success: function(data) {
+                if (data.code != 200) {
+                    alert(data.msg);
+                    return;
+                }
+                alert("사용자 그룹을 생성하였습니다.");
+                location.href = '/usergroup/list'
+            },error: function(jqXHR,textStatus,errorThrown) {
+                alert("사용자 그룹 수정 실패");
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        $('.selectize').selectize({
+            sortField: 'text'
+        });
+
+        // 사용자 호텔
+        $('.div-tag').tagsinput({
+            allowDuplicates: false,
+            itemValue: 'id',
+            itemText: 'label',
+            freeInput: false
+        });
+
+        $('.bootstrap-tagsinput input').attr('readonly', true);
+        
+        {% for u in user_list %}
+            $('.div-tag').tagsinput('add', {id:{{u.id}}, label:"{{u.name}}"});
+        {% endfor %}
+    });
+
+</script>
+{% endblock %}

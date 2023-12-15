@@ -1,0 +1,151 @@
+{% extends "admin/layout.html" %}
+{% block contents %}
+<style>
+    th, td {
+        text-align: center;
+    }
+</style>
+
+<div style="display: flex; flex-direction: column; margin-bottom: 20px;">
+    <form action="/account/list" method="get" style="display: flex; flex-direction: row; align-items: center;">
+        <span style="width: 120px;">검색</span>
+        <input type="text" class="form-control" style="width: 15vw;" name="name" placeholder="키워드" value="{{keyword}}">
+        <input type="submit" style="width: 80px; margin-left: 10px;" class="btn btn-secondary" value="검색">
+    </form>
+    <div>
+        계정 유형
+        <input type="radio" value=0 name="check" onclick="type_func(value)">전체
+        <input type="radio" value=4 name="check" onclick="type_func(value)">유료
+        <input type="radio" value=1 name="check" onclick="type_func(value)">무료
+        <input type="radio" value=3 name="check" onclick="type_func(value)">관리자
+    </div>
+    
+    <div style="display: flex; flex-direction: row; margin-top: 10px;">
+        <input type="button" class="btn btn-success" value="계정 생성" onclick="location.href='/account/create'">
+    </div>
+</div>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col" onclick="sort_func('id')">번호</th>
+            <th scope="col" onclick="sort_func('email')">아이디</th>
+            <th scope="col"  onclick="sort_func('name')">업체명</th>
+            <th scope="col">계정 유형</th>
+            <th scope="col" onclick="sort_func('created_at')">생성일자</th>
+            <th scope="col" onclick="sort_func('last_login')">최근접속</th>
+            <th scope="col">수정</th>
+            <th scope="col">삭제</th>
+            <th scope="col">접속</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items['items'] %}
+        <tr>
+            <td>{{item.id}}</td>
+            <td>{{item.user_id}}</td>
+            <td><a href="/account/edit?id={{item.id}}">{{item.name}}</a></td>
+            <td>{{user_types[item.user_type]}}</td>
+            <td>{{item.created_at}}</td>
+            <td>{{item.last_logged_at}}</td>
+            <td><input type="button" class="btn btn-success" value="수정" onclick="location.href='/account/edit?id={{item.id}}'"></td>
+            <td><input type="button" class="btn btn-danger" value="삭제" onclick="delete_account({{item.id}});"></td>
+            <td><input type="button" class="btn btn-light" value="접속" onclick="location.href='/account/connect?user_id={{item.user_id}}'"></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    function delete_account(user_id) {
+        if (!confirm('정말 삭제 하시겠습니까?'))
+            return false;
+        
+        $.ajax({
+            url: "/account/api/delete",
+            type: "post",
+            accept: "application/json",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({'id': user_id}),
+            dataType: "json",
+            success: function(data) {
+                if (data.code != 200) {
+                    alert(data.msg);
+                    return;
+                }
+                alert("계정을 삭제하였습니다.");
+                location.reload();
+            },error: function(jqXHR,textStatus,errorThrown) {
+                alert("계정 삭제 실패");
+            }
+        });
+    }
+
+</script>
+
+<center>
+{% if prev10 is not none %}
+    <a href="{{ modify_query(page=items.prev10) }}">[Prev]</a>
+{% endif %}
+
+{% for p in items.page_list %}
+    &nbsp;
+    {% if p == items.page %}
+        {{p}}
+    {% else %}
+        <a href="{{ modify_query(page=p) }}">{{p}}</a>
+    {% endif %}
+    &nbsp;
+{% endfor %}
+
+{% if next10 is not none %}
+    <a href="{{ modify_query(page=items.next10) }}">[Next]</a>
+{% endif %}
+</center>
+
+<script>
+    // src dict + dest dict => src dict 에 저장
+    function merge_dict(dest, src){
+        for(key in src){
+            dest[key] = src[key]
+        }
+        return dest;
+    }
+
+    // 현재 url 의 파라미터 조회
+    function get_params() {
+        var params = {};
+        if (location.search.substr(1) != '')
+            location.search.substr(1).split("&").forEach(function(item) {params[item.split("=")[0]] = item.split("=")[1]});
+        return params;
+    }
+
+    // 현재 url 파라미터에서 key:value 넣어주면 새로운 url 만드는 함수
+    function query_update(update_params) {
+        var params = get_params()
+        updated_params = merge_dict(params, update_params);
+
+        param_list = [];
+        for (key in updated_params)
+            param_list.push(key + '=' + updated_params[key]);
+
+        return window.location.pathname + '?' + param_list.join('&');
+    }
+
+    function sort_func(sort_key) {
+        stype = 'asc';
+        url_params = get_params();
+        if (url_params.sort == sort_key && url_params.stype == 'asc')
+            stype = 'desc';
+        
+        return location.href = query_update({"sort": sort_key, "stype": stype});
+    }
+
+    function type_func(type) {
+        return location.href = query_update({"type": type});
+    }
+
+    let selected_type = {{type}}
+    $(":radio[name='check'][value='" + selected_type + "']").attr('checked', true);
+
+</script>
+{% endblock %}

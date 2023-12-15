@@ -1,0 +1,47 @@
+{% extends "admin/layout.html" %}
+{% block contents %}
+    <div>
+        <b>호텔 정보</b>
+        <div>{{hotel_name}}</div>
+    </div>
+    <div>
+        <b>OTA</b>
+        <select name="ota" id="ota">
+            {% for k, v in support_ota_dict.items() %}
+            <option value="{{k}}" {{'selected' if ota | string == k | string else ''}}>{{v}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <b>시간</b>
+        <select name="hour" id="hour">
+            {% for h in range(24) %}
+            <option value="{{h}}" {{'selected' if hour == h else ''}}>{{h}}시</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div style="display: flex; flex-direction: row;">
+        <div style="flex:1">표준출력</div>
+        <div style="flex:1">에러메시지</div>
+    </div>
+    {% if item is not none %}
+    <div style="display: flex; flex-direction: row;">
+        <div style="flex:1">{{item.output.replace('\n', '<br>') | safe}}</div>
+        <div style="flex:1">{{item.error.replace('\n', '<br>') | safe}}</div>
+    </div>
+
+    {% endif %}
+
+<script>
+
+    $("#ota").change(function(){
+        var val = $(this).val();
+        location.href = 'log?id={{hotel_id}}&name={{hotel_name}}&ota='+val+'&hour={{hour}}';
+    })
+
+    $("#hour").change(function(){
+        var val = $(this).val();
+        location.href = 'log?id={{hotel_id}}&name={{hotel_name}}&ota={{ota}}&hour='+val;
+    })
+</script>
+{% endblock %}

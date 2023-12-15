@@ -1,0 +1,66 @@
+{% extends "admin/layout.html" %}
+{% block contents %}
+    <div>
+        <b>호텔 정보</b>
+        <select name="hotel_id" id="hotel_id">
+            {% for k, v in hotels.items() %}
+            <option value="{{k}}" {{'selected' if hotel_id | string == k | string else ''}}>{{v}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <b>OTA</b>
+        <select name="ota" id="ota">
+            {% for k, v in support_ota_dict.items() %}
+            <option value="{{k}}" {{'selected' if ota | string == k | string else ''}}>{{v}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <b>시간</b>
+        <select name="hour" id="hour">
+            {% for h in range(24) %}
+            <option value="{{h}}" {{'selected' if hour == h else ''}}>{{h}}시</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <!-- <input type="button" value="제출" onclick='onclick_fun()'> -->
+    </div>
+    <div style="display: flex; flex-direction: row;">
+        <div style="flex:1">표준출력</div>
+        <div style="flex:1">에러메시지</div>
+    </div>
+    {% if item is not none %}
+    <div style="display: flex; flex-direction: row;">
+        <div style="flex:1">{{item.output.replace('\n', '<br>') | safe}}</div>
+        <div style="flex:1">{{item.error.replace('\n', '<br>') | safe}}</div>
+    </div>
+
+    {% endif %}
+
+<script>
+    // function onclick_fun() {
+    //     let hotel_id = document.getElementById("hotel_id").value;
+    //     let ota = document.getElementById("ota").value;
+    //     let hour = document.getElementById("hour").value;
+
+    //     location.href='select_crawler?hotel_id='+hotel_id+'&ota='+ota+'&hour='+hour
+    // }
+
+    $("#hotel_id").change(function(){
+        var val = $(this).val();
+        location.href = 'select_crawler?hotel_id='+val+'&ota={{ota}}&hour={{hour}}';
+    })
+
+    $("#ota").change(function(){
+        var val = $(this).val();
+        location.href = 'select_crawler?hotel_id={{hotel_id}}&ota=' + val + '&hour={{hour}}';
+    })
+
+    $("#hour").change(function(){
+        var val = $(this).val();
+        location.href = 'select_crawler?hotel_id={{hotel_id}}&ota={{ota}}&hour=' + val;
+    })
+</script>
+{% endblock %}

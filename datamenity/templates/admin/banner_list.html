@@ -1,0 +1,95 @@
+{% extends "admin/layout.html" %}
+{% block contents %}
+<style>
+    th, td {
+        text-align: center;
+    }
+</style>
+
+<div style="display: flex; flex-direction: column; margin-bottom: 20px;">
+    <form action="/banner/list" method="get" style="display: flex; flex-direction: row; align-items: center;">
+        <span style="width: 120px;">검색</span>
+        <input type="text" class="form-control" style="width: 15vw;" name="name" placeholder="키워드" value="{{keyword}}">
+        <input type="submit" style="width: 80px; margin-left: 10px;" class="btn btn-secondary" value="검색">
+    </form>
+    
+    <div style="display: flex; flex-direction: row; margin-top: 10px;">
+        <input type="button" class="btn btn-success" value="배너 생성" onclick="location.href='/banner/create'">
+    </div>
+</div>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col">번호</th>
+            <th scope="col">이름</th>
+            <th scope="col">배너타입</th>
+            <th scope="col">배너시작일자</th>
+            <th scope="col">배너종료일자</th>
+            <th scope="col">배너생성일자</th>
+            <th scope="col">수정</th>
+            <th scope="col">삭제</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items['items'] %}
+        <tr>
+            <td>{{item.id}}</td>
+            <td><a href="/banner/edit?id={{item.id}}">{{item.name}}</a></td>
+            <td>{{item.banner_type}}</td>
+            <td>{{item.started_at}}</td>
+            <td>{{item.ended_at}}</td>
+            <td>{{item.created_at}}</td>
+            <td><input type="button" class="btn btn-success" value="수정" onclick="location.href='/banner/edit?id={{item.id}}'"></td>
+            <td><input type="button" class="btn btn-danger" value="삭제" onclick="delete_banner({{item.id}});"></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    function delete_banner(banner_id) {
+        if (!confirm('정말 삭제 하시겠습니까?'))
+            return false;
+        
+        $.ajax({
+            url: "/banner/api/delete",
+            type: "post",
+            accept: "application/json",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({'id': banner_id}),
+            dataType: "json",
+            success: function(data) {
+                if (data.code != 200) {
+                    alert(data.msg);
+                    return;
+                }
+                alert("배너를 삭제하였습니다.");
+                location.reload();
+            },error: function(jqXHR,textStatus,errorThrown) {
+                alert("배너 삭제 실패");
+            }
+        });
+    }
+
+</script>
+
+<center>
+{% if prev10 is not none %}
+    <a href="{{ modify_query(page=items.prev10) }}">[Prev]</a>
+{% endif %}
+
+{% for p in items.page_list %}
+    &nbsp;
+    {% if p == items.page %}
+        {{p}}
+    {% else %}
+        <a href="{{ modify_query(page=p) }}">{{p}}</a>
+    {% endif %}
+    &nbsp;
+{% endfor %}
+
+{% if next10 is not none %}
+    <a href="{{ modify_query(page=items.next10) }}">[Next]</a>
+{% endif %}
+</center>
+{% endblock %}

@@ -1,0 +1,354 @@
+{% extends "admin/layout.html" %}
+
+{% block style %}
+    <style>
+
+    </style>
+{% endblock %}
+
+{% block contents %}
+<div class="card" style="margin-bottom: 30px;">
+    <div class="card-body">
+        <div class="form-group row">
+            <div class="col-lg-12" style="margin-top:40px;">
+                <b>호텔 지정</b>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-lg-3 col-form-label form-control-label">호텔</label>
+            <div class="col-lg-9">
+                <select class="selectize" id="hotel_id" name="hotel_id" 
+                onchange="location.href=`/roomtype/set_roomtype?hotel_id=${this.value}`">
+                    {% for k, v in hotels.items() %}
+                    <option value="{{k}}">{{v}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin: 0 250px 50px;">
+            {% for large_group in json_data %}
+            <button id="btn_large_scroll:{{ loop.index0 }}" class="btn btn-dark" onclick="large_scroll(id)">{{ large_group['name'] }}</button>
+            {% endfor %}
+        </div>
+
+
+        <div>
+                {% for large_group in json_data %}
+                {% set large_index0 = loop.index0 %}
+                
+                <div class="large_element" id="large_group:{{large_index0}}" style="margin-bottom: 60px;" >
+                <div>
+                    <h1>
+                        <label>대분류명 :</label>
+                        <input type="text" value="{{ large_group['name'] }}" class="large_name" />
+                    </h1>
+                </div>
+                    
+                    <div id="medium_parent_element:{{ large_index0 }}" > 
+                        {% for medium_group in large_group['items'] %}
+                        {% set medium_index0 = loop.index0 %}
+                        <div id="medium_element:{{ large_index0 }}_{{ medium_index0 }}" class="medium_element:{{ large_index0 }} medium_element" style="display: flex;">
+                            <div aria-disabled="flex">
+                                <h4>
+                                    <label>중분류명 : </label>
+                                    <input type="text" value="{{ medium_group['name'] }}" class="medium_name" />
+                                </h4>
+                                <div>
+                                    <button id="btn_delete_medium:{{ large_index0 }}_{{ medium_index0 }}" onclick="delete_medium(id)" class="btn btn-danger btn-sm">중분류 삭제</button>
+                                </div>
+                            </div>
+                            <div>
+                                <table class="table table-striped table-bordered table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>소분류명</th>
+                                            <th>허용오차거리</th>
+                                            <th>가중치</th>
+                                            <th>기능</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="medium_tbody:{{large_index0}}_{{medium_index0}}">
+                                        {% for small_group in medium_group['items'] %}
+                                        {% set samll_index0 = loop.index0 %}
+                                        <tr id="medium_tr:{{large_index0}}_{{ medium_index0 }}_{{ samll_index0 }}" class="small_element">
+                                            <td>
+                                                <input id="small_name_input:{{large_index0}}_{{ medium_index0 }}_{{ samll_index0 }}" class="small_input_name"
+                                                style="background-color: rgba(0,0,0,0); padding-left: 10px;" type="text" value="{{small_group['name'] }}"/>
+                                            </td>
+                                            <td>
+                                                <input id="small_dist_input:{{large_index0}}_{{ medium_index0 }}_{{ samll_index0 }}" class="small_input_dist"
+                                                style="background-color: rgba(0,0,0,0); padding-left: 10px;" type="number" value="{{small_group['dist'] }}"/>
+                                            </td>
+                                            <td>
+                                                <input id="small_weight_input:{{large_index0}}_{{ medium_index0 }}_{{ samll_index0 }}" class="small_input_weight"
+                                                style="background-color: rgba(0,0,0,0); padding-left: 10px;" type="number" value="{{small_group['weight'] }}"/>
+                                            </td>
+                                            <td>
+                                                <button id="delete_small:{{large_index0}}_{{ medium_index0 }}_{{ samll_index0 }}" 
+                                                onclick="delete_tr(id)"
+                                                class="btn btn-danger btn-sm">삭제</button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        <tr>
+                                            <td>
+                                                <input id="add_small_name_input:{{large_index0}}_{{medium_index0}}" style="padding-left: 10px;" type="text" value="" />
+                                            </td>
+                                            <td>
+                                                <input id="add_small_dist_input:{{large_index0}}_{{medium_index0}}" style="padding-left: 10px;" type="number" value="" />
+                                            </td>
+                                            <td>
+                                                <input id="add_small_weight_input:{{large_index0}}_{{medium_index0}}" style="padding-left: 10px;" type="number" value="" />
+                                            </td>
+                                            <td>
+                                                <button id="btn_add_samll_tr:{{large_index0}}_{{medium_index0}}" class="btn btn-success btn-sm" onclick="add_tr(id)">생성</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                        {% endfor %}    
+                    </div>
+                    <div>
+                        <button class="btn btn-success btn-sm" id="btn_add_medium:{{ large_index0 }}" onclick="add_medium(id)">중분류 생성</button>
+                    </div>
+                    
+                </div>
+                {% endfor %}
+                <input type="submit" class="btn btn-lg" value="객실 분류 저장 하기" onclick="submitFuntion()" />
+        </div>
+
+        <div>
+            <button style="height: 50px; border-radius: 50%; width: 50px; background: #ffbec5; font-size: 20px; box-shadow: 3px 3px 2px 1px rgb(0 0 0 / 15%); position: fixed; bottom: 70px; right: 70px;" onclick="scroll_top()">
+                ↑
+            </button>
+            <button style="height: 50px; border-radius: 50%; width: 50px; background: #ffbec5; font-size: 20px; box-shadow: 3px 3px 2px 1px rgb(0 0 0 / 15%); position: fixed; bottom: 10px; right: 70px;" onclick="scroll_bottom()">
+                ↓
+            </button>
+        </div>
+
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+    <script>
+    $(document).ready(function () {
+        $('.selectize').selectize({
+            sortField: 'text'
+        });
+    });
+
+    
+    // url 파라미터 값으로 select 수정하기
+    let param = new URLSearchParams(window.location.search);
+    document.querySelector('#hotel_id').value = param.get('hotel_id')
+
+    function add_tr(id){
+        let target_number = id.split(':')[1]
+
+        let small_name_value = document.getElementById('add_small_name_input:' + target_number).value
+        let small_dist_value = document.getElementById('add_small_dist_input:' + target_number).value
+        let small_weight_value = document.getElementById('add_small_weight_input:' + target_number).value
+
+        let one_target_number = id.split(':')[1].replace(/[_]/g, " ")
+
+        let large_index0 = one_target_number.split(' ')[0]
+        let medium_index0 = one_target_number.split(' ')[1]
+
+        let has_name = true;
+        if(small_name_value === ''){
+            alert('소분류명은 필수 입력 항목입니다.')
+            has_name = false;
+            document.getElementById(`add_small_name_input:${large_index0}_${medium_index0}`).value = ''
+            document.getElementById(`add_small_dist_input:${large_index0}_${medium_index0}`).value = ''
+            document.getElementById(`add_small_weight_input:${large_index0}_${medium_index0}`).value = ''
+        }
+        if(small_dist_value == ''){
+            small_dist_value = '1'
+        }
+        if(small_weight_value == ''){
+            small_weight_value = '0'
+        }
+        if(has_name){
+            let medium_tbody = document.getElementById('medium_tbody:' + target_number)
+            let medium_tr_count = medium_tbody.rows.length
+            let row = medium_tbody.insertRow(medium_tbody.rows.length-1)
+
+            row.id = `medium_tr:${large_index0}_${medium_index0}_${medium_tr_count}`
+            row.className = 'small_element'
+
+            let small_name = row.insertCell(0);
+            let small_dist = row.insertCell(1);
+            let small_weight = row.insertCell(2);
+            let small_button = row.insertCell(3);
+
+            small_name.innerHTML = `<input id="small_name_input:${large_index0}_${medium_index0}_${medium_tr_count}" class="small_input_name" style="background-color: rgba(0,0,0,0); padding-left: 10px;" type="text" value="${small_name_value}">`
+            small_dist.innerHTML = `<input id="small_dist_input:${large_index0}_${medium_index0}_${medium_tr_count}" class="small_input_dist" style="background-color: rgba(0,0,0,0); padding-left: 10px;" type="number" value="${small_dist_value}">`
+            small_weight.innerHTML = `<input id="small_weight_input:${large_index0}_${medium_index0}_${medium_tr_count}" class="small_input_weight" style="background-color: rgba(0,0,0,0); padding-left: 10px;" type="number" value="${small_weight_value}">`
+            small_button.innerHTML = `<button id="delete_small:${large_index0}_${medium_index0}_${medium_tr_count}" onclick="delete_tr(id)" class="btn btn-danger btn-sm">삭제</button>`
+
+            document.getElementById(`add_small_name_input:${large_index0}_${medium_index0}`).value = ''
+            document.getElementById(`add_small_dist_input:${large_index0}_${medium_index0}`).value = ''
+            document.getElementById(`add_small_weight_input:${large_index0}_${medium_index0}`).value = ''
+        }
+        
+
+    }
+
+    function delete_tr(id, e){
+        if(confirm("정말 해당 소분류를 삭제하시겠습니까??") == true){
+            let target_number = id.split(':')[1]
+            let target_tr = document.getElementById('medium_tr:' + target_number)
+            $(target_tr).remove(); 
+        }else{
+
+        }
+    }
+
+    function add_medium (id) {
+        let large_index0 = id.split(':')[1]
+        let medium_index0 = document.getElementsByClassName(`medium_element:${large_index0}`).length;
+        let large_element = document.getElementById(`medium_parent_element:${large_index0}`)
+        let add_new_medium = `
+            <div id="medium_element:${ large_index0 }_${ medium_index0 }" class="medium_element:${large_index0} medium_element" style="display: flex;">
+                <div aria-disabled="flex">
+                    <h4>
+                        <label>중분류명 : </label>
+                        <input type="text" value="" class="medium_name" />
+                    </h4>
+                    <div>
+                        <button id="btn_delete_medium:${large_index0}_${medium_index0}" onclick="delete_medium(id)" class="btn btn-danger btn-sm">중분류 삭제</button>
+                    </div>
+                </div>
+                <div>
+                    <table class="table table-striped table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>소분류명</th>
+                                <th>허용오차거리</th>
+                                <th>가중치</th>
+                                <th>기능</th>
+                            </tr>
+                        </thead>
+                        <tbody id="medium_tbody:${large_index0}_${medium_index0}">
+                            <tr>
+                                <td>
+                                    <input id="add_small_name_input:${large_index0}_${medium_index0}" style="padding-left: 10px;" type="text" value="" />
+                                </td>
+                                <td>
+                                    <input id="add_small_dist_input:${large_index0}_${medium_index0}" style="padding-left: 10px;" type="number" value="" />
+                                </td>
+                                <td>
+                                    <input id="add_small_weight_input:${large_index0}_${medium_index0}" style="padding-left: 10px;" type="number" value="" />
+                                </td>
+                                <td>
+                                    <button id="btn_add_samll_tr:${large_index0}_${medium_index0}" class="btn btn-success btn-sm" onclick="add_tr(id)">생성</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+            
+        `
+        $(large_element).append(add_new_medium)
+    }
+
+    function delete_medium(id){
+        if(confirm("정말 해당 중분류를 삭제하시겠습니까??") == true){
+            let target_number = id.split(':')[1]
+            let target_medium_element = document.getElementById('medium_element:' + target_number)
+            $(target_medium_element).remove(); 
+        }else{
+        }
+    }
+
+    function large_scroll(id){
+        let target_number = id.split(':')[1];
+        let target_large = document.getElementById('large_group:'+target_number);
+        let offset = $(target_large).offset();
+        $('html').animate({scrollTop:offset.top},200)
+    }
+
+    function scroll_top () {
+        window.scrollTo({top : 0, behavior: 'smooth'}); 
+    }
+
+    function scroll_bottom() {
+        window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+    }
+
+    function submitFuntion(){
+        const medium_names = document.getElementsByClassName('medium_name')
+        let null_meidum_name = true;
+        for(medium_name of medium_names){
+            if(medium_name.value === ''){
+                alert('중분류에 공백이 있습니다')
+                null_meidum_name = false;
+            }
+        }
+        if(null_meidum_name){
+            let setting_api = [];
+            let large_element = document.getElementsByClassName('large_element')
+            for(let i=0; i<large_element.length; i++){
+                let medium_element = large_element[i].getElementsByClassName('medium_element')
+                let large_name = large_element[i].getElementsByClassName('large_name')[0].value;
+                let medium_array = [];
+                for(let j=0; j<medium_element.length; j++){
+                    let small_element = medium_element[j].getElementsByClassName('small_element')
+                    let medium_name = medium_element[j].getElementsByClassName('medium_name')[0].value
+                    let small_array = [];
+                    for(let k=0; k<small_element.length; k++){
+                        let name = small_element[k].getElementsByClassName('small_input_name')[0].value
+                        let dist = small_element[k].getElementsByClassName('small_input_dist')[0].value
+                        let weight = small_element[k].getElementsByClassName('small_input_weight')[0].value
+                        small_array.push({
+                            name,
+                            dist,
+                            weight
+                        })
+                    }
+                    medium_array.push({
+                        name: medium_name,
+                        items: small_array
+                    })
+                }
+                setting_api.push({
+                    name: large_name,
+                    items: medium_array
+                })
+            }
+            const post_data = {"setting": setting_api, "hotel_id": param.get('hotel_id')}
+            $.ajax({
+                url: "/roomtype/api/update",
+                type: "post",
+                accept: "application/json",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(post_data),
+                dataType: "json",
+                success: function(data) {
+                    if (data.code != 200) {
+                        alert(data.msg);
+                        return;
+                    }
+                    alert("성공적으로 수정하였습니다.");
+                },error: function(jqXHR,textStatus,errorThrown) {
+                    alert("내용 수정 실패");
+                }
+            });
+            
+        }
+    }
+
+
+
+
+    </script>
+{% endblock %}

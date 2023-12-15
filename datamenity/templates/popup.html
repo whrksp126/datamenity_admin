@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+alert("{{msg}}");
+{% if redirect is not none %}
+location.href = '{{redirect}}';
+{% else %}
+window.history.go(-1);
+{% endif %}
+</script>
+ 
+</body>
+</html>

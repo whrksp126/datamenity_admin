@@ -1,0 +1,250 @@
+{% extends "admin/layout.html" %}
+{% block contents %}
+<style>
+    .bootstrap-tagsinput {
+        width: 100%;
+        height: 200px;
+        padding: 10px;
+        line-height: 40px;
+    }
+
+    .bootstrap-tagsinput .tag {
+        color: white;
+        display: inline-block;
+        background: #1D375F;
+        padding-left: 10px;
+        padding-right: 10px;
+        padding-bottom: 2px;
+        line-height: 40px;
+        margin: 2px;
+    }
+
+    .submit_button {
+        border: 1.3px solid #dfdfdf; 
+        background-color: transparent; 
+        letter-spacing: 5px;
+    }
+    .submit_button:hover {
+        /* border: 1.5px solid #e64b35; */
+        font-weight: 800;
+        color: #e64b35;
+        box-shadow: 3px 3px 5px 3px #e64b353b;
+    }
+    .submit_button:active {
+        box-shadow: inset 3px 3px 5px 3px #e64b353b;
+        border: none;
+    }
+
+    input[type="file"]::file-selector-button {
+        display: none;
+    }
+
+</style>
+<form action="/banner/api/create_or_update" method="post" enctype="multipart/form-data" name="banner_frm">
+<input type="hidden" name="banner_id" value="{{banner_item.id}}">
+<div class="card" style="margin-bottom:50px;">
+
+    <div class="card-body">
+        
+        <div class="form-group row">
+            <div class="col-lg-12">
+                <b>배너 정보</b>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-lg-3 col-form-label form-control-label">배너 이름</label>
+            <div class="col-lg-9">
+                <input class="form-control" type="text" id="banner_name" name="banner_name" value="{{banner_item.name}}" />
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-lg-3 col-form-label form-control-label">배너 타입</label>
+            <div class="col-lg-9">
+                <select class="form-control" id="banner_type" name="banner_type" onchange="change_banner()" >
+                    {% for k, v in banner_types.items() %}
+                    <option value="{{k}}">{{v}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-lg-3 col-form-label form-control-label">배너 시작 날짜</label>
+            <div class="col-lg-9">
+                <div class='input-group log-event' id='linkedPickers1' data-td-target-input='nearest' data-td-target-toggle='nearest' >
+                    <input id='linkedPickers1Input' type='text' class='form-control' data-td-target='#linkedPickers1' placeholder="YYYY-MM-DD" name="started_at"/>
+                    <span class='input-group-text' data-td-target='#linkedPickers1' data-td-toggle='datetimepicker' >
+                        <span class='fa-solid fa-calendar'></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-lg-3 col-form-label form-control-label">배너 끝나는 날짜</label>
+            <div class="col-lg-9">
+                <div class='input-group log-event' id='linkedPickers2' data-td-target-input='nearest' data-td-target-toggle='nearest'>
+                    <input id='linkedPickers2Input' type='text' class='form-control' data-td-target='#linkedPickers2' placeholder="YYYY-MM-DD" name="ended_at"/>
+                    <span class='input-group-text' data-td-target='#linkedPickers2' data-td-toggle='datetimepicker' >
+                        <span class='fa-solid fa-calendar'></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-lg-3 col-form-label form-control-label">배너 이미지</label>
+            <div class="col-lg-9">
+                <input class="form-control" type="file" id="input_banner_img" name="banner_img" onchange="image_input_change()" />
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-lg-3 col-form-label form-control-label">배너 링크</label>
+            <div class="col-lg-9">
+                <input class="form-control" type="text" id="input_banner_link" name="link" value="{{banner_item.link}}"/>
+            </div>
+        </div>
+        <div class="img_tag_container" style="display: flex;">
+            <img id="banner_image" style="max-width: 500px; max-height:300px" src="" alt="" />
+        </div>
+        <div class="form-group row" id="banner_color_box" style="display: none;">
+            <label class="col-lg-3 col-form-label form-control-label">배너 배경색</label>
+            <div class="col-lg-9">
+                <input class="form-control" type="color" id="bg_color" name="bg_color" value="#fffff" />
+            </div>
+        </div>
+        
+        <br>
+        <div class="form-group row">
+            <div class="col-lg-12">
+                <b>사용자 그룹 정보</b>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-lg-3 col-form-label form-control-label">사용자 그룹 지정</label>
+            <div class="col-lg-9">
+                <select class="form-control" id="usergroup" name="usergroup">
+                    {% for k, v in usergroups.items() %}
+                    <option value="{{k}}">{{v}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group row">
+            <div class="col-lg-12" style="text-align: center;">
+                <input type="button" class="btn btn-primary" value="생성" onclick="check_frm()">
+                <input type="button" class="btn btn-secondary" value="돌아가기" onclick="history.go(-1)">
+            </div>
+        </div>
+        
+    </div><!-- card body -->
+</div> <!-- card-outline -->
+</form>
+<script>
+    function check_frm() {
+        if(banner_frm.banner_name.value.length == 0){
+            alert("배너 이름을 입력해주세요.");
+            banner_frm.banner_name.focus();
+            return;
+        }
+        if(banner_frm.banner_img.value.length == 0){
+            alert("배너 이미지를 추가해주세요.");
+            return;
+        }
+        if(banner_frm.started_at.value.length == 0){
+            alert("시작 날짜를 지정해주세요.");
+            banner_frm.started_at.focus();
+            return;
+        }
+        if(banner_frm.ended_at.value.length == 0){
+            alert("끝 날짜를 지정해주세요.");
+            banner_frm.ended_at.focus();
+            return;
+        }
+
+        document.banner_frm.submit();
+    }
+
+    // 이미지 프리뷰 시작
+    function readURL(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+             $('#banner_image').attr('src', e.target.result);  
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    $("#input_banner_img").change(function(){
+        readURL(this);
+    });
+    // 이미지 프리뷰 끝
+
+    // band_banner 선택 시 생상 선택 박스 생성 시작
+    const change_banner = () => {
+        const select_value = document.getElementById('banner_type').value
+        if (select_value === '2') {
+            console.log('band')
+            document.getElementById('banner_color_box').style.display = 'flex'
+        }else{
+            document.getElementById('banner_color_box').style.display = 'none'
+        }
+    }
+    // band_banner 선택 시 생상 선택 박스 생성 시작
+
+
+    const linkedPicker1Element = document.getElementById('linkedPickers1');
+    const linked1 = new tempusDominus.TempusDominus(document.getElementById('linkedPickers1'),{
+        display: {
+            components: {
+                decades: true,
+                year: true,
+                month: true,
+                date: true,
+                hours: false,
+                minutes: false,
+                seconds: false,
+            }
+        },    
+        localization: {
+            startOfTheWeek: 1
+        }
+    });
+    linked1.dates.formatInput = function(date) { {return moment(date).format('YYYY-MM-DD') } }
+    const linked2 = new tempusDominus.TempusDominus(document.getElementById('linkedPickers2'), {
+        display: {
+            components: {
+                decades: true,
+                year: true,
+                month: true,
+                date: true,
+                hours: false,
+                minutes: false,
+                seconds: false,
+            }
+        },
+        useCurrent: false
+    });
+    linked2.dates.formatInput = function(date) { {return moment(date).format('YYYY-MM-DD') } }
+
+    //using event listeners
+    linkedPicker1Element.addEventListener(tempusDominus.Namespace.events.change, (e) => {
+        linked2.updateOptions({
+            restrictions: {
+                minDate: e.detail.date
+            },
+        });
+    });
+
+    //using subscribe method
+    const subscription = linked2.subscribe(tempusDominus.Namespace.events.change, (e) => {
+        linked1.updateOptions({
+            restrictions: {
+            maxDate: e.date
+            }
+        });
+    });
+
+    let selected_type = {{banner_item.banner_type}}
+    let selected_usergroup = {{usergroup_has_banner_item.usergroup_id}}
+    $('#banner_type').val(selected_type).prop("selected", true)
+    $('#usergroup').val(selected_usergroup).prop("selected", true)
+</script>
+{% endblock %}

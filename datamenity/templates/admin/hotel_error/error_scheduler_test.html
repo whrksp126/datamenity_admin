@@ -1,0 +1,111 @@
+{% extends "admin/layout.html" %}
+{% block contents %}
+<style>
+    th, td {
+        text-align: center;
+    }
+</style>
+
+<div style="display: flex; flex-direction: column; margin-bottom: 5px;">
+    <!--명령어 : /home/heroworks/datamenity-admin/.venv/bin/celery -A datamenity.celery worker -c 10 -Q test_queue-->
+    <form action="/error/scheduler/test" method="post" style="display: flex; flex-direction: column;">
+        Crawler Type : 
+        <select class="form-control" id="crawler_type" name="crawler_type">
+            <option value="price" {{'selected' if crawler_type == 'price' else ''}}>가격</option>
+            <option value="review" {{'selected' if crawler_type == 'review' else ''}}>리뷰</option>
+        </select>
+        HOTEL ID (Mysql) : <input type="number" class="form-control" id="hotel_id" name="hotel_id" value="{{hotel_id}}">
+        OTA : <select class="form-control" id="ota" name="ota" value="{{ota}}">
+            {% for k, v in ota_str_to_code.items() %}
+                <option value="{{v}}" {{'selected' if (v | int) == (ota | int) else ''}}>{{k}}</option>
+            {% endfor %}
+        </select>
+            
+        <span style="width: 120px;">검색</span>
+        <input type="submit" style="width: 80px; margin-left: 10px;" class="btn btn-secondary" value="테스트 시작">
+    </form>
+</div>
+
+<script>
+    // src dict + dest dict => src dict 에 저장
+    function merge_dict(dest, src){
+        for(key in src){
+            dest[key] = src[key]
+        }
+        return dest;
+    }
+
+    // 현재 url 의 파라미터 조회
+    function get_params() {
+        var params = {};
+        if (location.search.substr(1) != '')
+            location.search.substr(1).split("&").forEach(function(item) {params[item.split("=")[0]] = item.split("=")[1]});
+        return params;
+    }
+
+    // 현재 url 파라미터에서 key:value 넣어주면 새로운 url 만드는 함수
+    function query_update(update_params) {
+        var params = get_params()
+        updated_params = merge_dict(params, update_params);
+
+        param_list = [];
+        for (key in updated_params)
+            param_list.push(key + '=' + updated_params[key]);
+
+        return window.location.pathname + '?' + param_list.join('&');
+    }
+
+    function sort_func(sort_key) {
+        /*
+        stype = 'asc';
+        url_params = get_params();
+        if (url_params.sort == sort_key && url_params.stype == 'asc')
+            stype = 'desc';
+        
+        return location.href = query_update({"sort": sort_key, "stype": stype});
+        */
+    }
+
+    function type_func(type) {
+        return location.href = query_update({"type": type});
+    }
+
+    $("#hotel_error_type").change(function(){
+        var val = $(this).val();
+        return location.href = query_update({"hotel_error_type": val});
+    })
+
+    $(".hotel_error_select").change(function(){
+        var hotel_id = $(this).data('hotel_id');
+        var ota_type = $(this).data('ota_type');
+        var scanned_at = $(this).data('scanned_at');
+        var val = $(this).val();
+
+        $.ajax({
+            url: "/error/api/set_error_type",
+            type: "post",
+            accept: "application/json",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({
+                'hotel_id': hotel_id,
+                'ota_type': ota_type,
+                'scanned_at': scanned_at,
+                'error_type': val
+            }),
+            dataType: "json",
+            success: function(data) {
+                if (data.code != 200) {
+                    alert(data.msg);
+                    return;
+                }
+                alert("수정 완료");
+            },error: function(jqXHR,textStatus,errorThrown) {
+                alert("수정 실패");
+            }
+        });
+        console.log(hotel_id, val);
+        //return location.href = query_update({"hotel_error_type": val});
+    })
+    
+</script>
+{% endblock %}

@@ -1,0 +1,169 @@
+{% extends "admin/layout.html" %}
+{% block contents %}
+<style>
+    th, td {
+        text-align: center;
+    }
+</style>
+
+<div style="display: flex; flex-direction: column; margin-bottom: 5px;">
+    <form action="/error/hotel/list" method="get" style="display: flex; flex-direction: row; align-items: center;">
+        <span style="width: 120px;">검색</span>
+        <input type="text" class="form-control" style="width: 15vw;" name="name" placeholder="키워드" value="{{keyword}}">
+        <input type="submit" style="width: 80px; margin-left: 10px;" class="btn btn-secondary" value="검색">
+    </form>
+</div>
+
+<div style="display: flex; flex-direction: row; align-items: center; margin-bottom: 20px;">
+    <span style="width: 120px;">에러타입</span>
+    <select class="form-control" id="hotel_error_type" name="hotel_error_type" style="width: 15vw;">
+        <option value="">전체</option>
+        {% for k, v in hotel_error_types.items() %}
+            <option value="{{k}}" {{'selected' if (k | string) == (hotel_error_type | string) else ''}}>{{v}}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div style="display: flex; flex-direction: column; margin-bottom: 20px;">
+    {% for k, v in hotel_error_types.items() %}
+        <p style="margin-bottom: .2rem;"><b>{{v}}</b> : <b>{{ '{:,}'.format(error_type_to_cnt[k]) }}</b> 개</p>
+    {% endfor %}
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col" onclick="sort_func('id')">호텔ID</th>
+            <th scope="col" onclick="sort_func('name')">호텔명</th>
+            <th scope="col" onclick="sort_func('ota_type')">OTA</th>
+            <th scope="col" onclick="sort_func('ota_link')">OTA 사이트 링크</th>
+            <th scope="col" onclick="sort_func('scanned_at')">스캔시간</th>
+            <th scope="col" onclick="sort_func('error_type')">에러타입</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items['items'] %}
+        <tr>
+            <td>{{item.id}}</td>
+            <td><a href="/hotels/edit?id={{item.id}}">{{item.name}}</a></td>
+            <td>{{item.ota_type.name}}</td>
+            <td style="width: 450px;">
+                <a href="{{item.url}}" target="_blank">
+                    {{(item.url[:50] + '...') if (item.url | length) > 50 else item.url}}
+                </a></td>
+            <td>{{item.scanned_at}}</td>
+            <td style="width: 13vw;">
+                <select class="form-control hotel_error_select" data-hotel_id="{{item.id}}" data-ota_type="{{item.ota_type.name}}" data-scanned_at="{{item.scanned_at}}">
+                {% for k, v in hotel_error_types.items() %}
+                    <option value="{{k}}" {{'selected' if k == item.hotel_error_type else ''}}>{{v}}</option>
+                {% endfor %}
+                </select>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<center>
+{% if prev10 is not none %}
+    <a href="{{ modify_query(page=items.prev10) }}">[Prev]</a>
+{% endif %}
+
+{% for p in items.page_list %}
+    &nbsp;
+    {% if p == items.page %}
+        {{p}}
+    {% else %}
+        <a href="{{ modify_query(page=p) }}">{{p}}</a>
+    {% endif %}
+    &nbsp;
+{% endfor %}
+
+{% if next10 is not none %}
+    <a href="{{ modify_query(page=items.next10) }}">[Next]</a>
+{% endif %}
+</center>
+
+<script>
+    // src dict + dest dict => src dict 에 저장
+    function merge_dict(dest, src){
+        for(key in src){
+            dest[key] = src[key]
+        }
+        return dest;
+    }
+
+    // 현재 url 의 파라미터 조회
+    function get_params() {
+        var params = {};
+        if (location.search.substr(1) != '')
+            location.search.substr(1).split("&").forEach(function(item) {params[item.split("=")[0]] = item.split("=")[1]});
+        return params;
+    }
+
+    // 현재 url 파라미터에서 key:value 넣어주면 새로운 url 만드는 함수
+    function query_update(update_params) {
+        var params = get_params()
+        updated_params = merge_dict(params, update_params);
+
+        param_list = [];
+        for (key in updated_params)
+            param_list.push(key + '=' + updated_params[key]);
+
+        return window.location.pathname + '?' + param_list.join('&');
+    }
+
+    function sort_func(sort_key) {
+        /*
+        stype = 'asc';
+        url_params = get_params();
+        if (url_params.sort == sort_key && url_params.stype == 'asc')
+            stype = 'desc';
+        
+        return location.href = query_update({"sort": sort_key, "stype": stype});
+        */
+    }
+
+    function type_func(type) {
+        return location.href = query_update({"type": type});
+    }
+
+    $("#hotel_error_type").change(function(){
+        var val = $(this).val();
+        return location.href = query_update({"hotel_error_type": val});
+    })
+
+    $(".hotel_error_select").change(function(){
+        var hotel_id = $(this).data('hotel_id');
+        var ota_type = $(this).data('ota_type');
+        var scanned_at = $(this).data('scanned_at');
+        var val = $(this).val();
+
+        $.ajax({
+            url: "/error/api/set_error_type",
+            type: "post",
+            accept: "application/json",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({
+                'hotel_id': hotel_id,
+                'ota_type': ota_type,
+                'scanned_at': scanned_at,
+                'error_type': val
+            }),
+            dataType: "json",
+            success: function(data) {
+                if (data.code != 200) {
+                    alert(data.msg);
+                    return;
+                }
+                alert("수정 완료");
+            },error: function(jqXHR,textStatus,errorThrown) {
+                alert("수정 실패");
+            }
+        });
+        console.log(hotel_id, val);
+        //return location.href = query_update({"hotel_error_type": val});
+    })
+    
+</script>
+{% endblock %}

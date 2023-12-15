@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flask App</title>
+</head>
+<body>
+<table border="1">
+    <h3>오류 총{{ error_count }}개</h3>
+{% for item in items %}
+    <tr>
+        <th scope="col">crawler_type</th>
+        <th scope="col">hour</th>
+        <th scope="col">hotel_id</th>
+        <th scope="col">ota</th>
+        <th scope="col">rule</th>
+        <th scope="col">output</th>
+        <th scope="col">error</th>
+    </tr>
+    <tr>
+        <td>{{ item.crawler_type }}</td>
+        <td>{{ item.hour }}</td>
+        <td>{{ item.hotel_id }}</td>
+        <td>{{ item.ota }}</td>
+        <td>{{ item.rule }}</td>
+        <td>{{ item.output }}</td>
+        <td>{{ item.error }}</td>
+    </tr>
+{% endfor %}
+</table>
+
+</body>
+</html>

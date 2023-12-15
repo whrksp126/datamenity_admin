@@ -1,0 +1,138 @@
+{% extends "admin/layout.html" %}
+{% block contents %}
+<style>
+    th, td {
+        text-align: center;
+    }
+</style>
+
+<div style="display: flex; flex-direction: column; margin-bottom: 20px;">
+    <form action="/hotels/list" method="get" style="display: flex; flex-direction: row; align-items: center;">
+        <span style="width: 120px;">검색</span>
+        <input type="text" class="form-control" style="width: 15vw;" name="name" placeholder="키워드" value="{{keyword}}">
+        <input type="submit" style="width: 80px; margin-left: 10px;" class="btn btn-secondary" value="검색">
+    </form>
+    
+    <div style="display: flex; flex-direction: row; margin-top: 10px;">
+        <input type="button" class="btn btn-success" value="호텔 생성" onclick="location.href='/hotels/create'">
+    </div>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col" style="width: 5%" id="id" onclick="sort_func('id')">번호</th>
+            <th scope="col" style="width: 40%;" id="name" onclick="sort_func('name')">호텔명</th>
+            {% for ota_code in range(ota_code_to_str | length) %}
+            <th scope="col">{{ota_code_to_str[ota_code][:4]}}</th>
+            {% endfor %}
+            <th scope="col">설정</th>
+            <th scope="col">삭제</th>
+            <th scope="col">로그</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items['items'] %}
+        <tr>
+            <td>{{item.id}}</td>
+            <td>{{item.name}}</td>
+            {% for ota_code in range(ota_code_to_str | length) %}
+            <td>
+                {% if ota_code | string in item.link %}
+                <span style="color:#1D375F; font-weight: 700;">■</span>
+                {% else %}
+                &nbsp;
+                {% endif %}
+            </td>
+            {% endfor %}
+            <td><input type="button" class="btn btn-success" value="수정" onclick="location.href='/hotels/edit?id={{item.id}}'"></td>
+            <td><input type="button" class="btn btn-danger" value="삭제" onclick="delete_hotel({{item.id}});"></td>
+            <td><input type="button" class="btn btn-light" value="로그" onclick="location.href='/hotels/log?id={{item.id}}&name={{item.name}}'"></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<center>
+{% if prev10 is not none %}
+    <a href="{{ modify_query(page=items.prev10) }}">[Prev]</a>
+{% endif %}
+
+{% for p in items.page_list %}
+    &nbsp;
+    {% if p == items.page %}
+        {{p}}
+    {% else %}
+        <a href="{{ modify_query(page=p) }}">{{p}}</a>
+    {% endif %}
+    &nbsp;
+{% endfor %}
+
+{% if next10 is not none %}
+    <a href="{{ modify_query(page=items.next10) }}">[Next]</a>
+{% endif %}
+</center>
+
+<script>
+    function delete_hotel(hotel_id) {
+        if (!confirm('정말 삭제 하시겠습니까?'))
+            return false;
+        
+        $.ajax({
+            url: "/hotels/api/delete",
+            type: "post",
+            accept: "application/json",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({'id': hotel_id}),
+            dataType: "json",
+            success: function(data) {
+                if (data.code != 200) {
+                    alert(data.msg);
+                    return;
+                }
+                alert("삭제하였습니다.");
+                location.reload();
+            },error: function(jqXHR,textStatus,errorThrown) {
+                alert("호텔 삭제 실패");
+            }
+        });
+    }
+
+    // src dict + dest dict => src dict 에 저장
+    function merge_dict(dest, src){
+        for(key in src){
+            dest[key] = src[key]
+        }
+        return dest;
+    }
+
+    // 현재 url 의 파라미터 조회
+    function get_params() {
+        var params = {};
+        if (location.search.substr(1) != '')
+            location.search.substr(1).split("&").forEach(function(item) {params[item.split("=")[0]] = item.split("=")[1]});
+        return params;
+    }
+
+    // 현재 url 파라미터에서 key:value 넣어주면 새로운 url 만드는 함수
+    function query_update(update_params) {
+        var params = get_params()
+        updated_params = merge_dict(params, update_params);
+
+        param_list = [];
+        for (key in updated_params)
+            param_list.push(key + '=' + updated_params[key]);
+
+        return window.location.pathname + '?' + param_list.join('&');
+    }
+
+    function sort_func(sort_key) {
+        stype = 'asc';
+        url_params = get_params();
+        if (url_params.sort == sort_key && url_params.stype == 'asc')
+            stype = 'desc';
+        
+        return location.href = query_update({"sort": sort_key, "stype": stype});
+    }
+</script>
+{% endblock %}

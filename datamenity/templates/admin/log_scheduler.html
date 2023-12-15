@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flask App</title>
+</head>
+<body>
+<table border="1">
+{% for item in items %}
+    <tr>
+        <th scope="col">crawler_type</th>
+        <th scope="col">hour</th>
+        <th scope="col">works_count</th>
+        <th scope="col">error_count</th>
+        <th scope="col">created_at</th>
+        <th scope="col">updated_at</th>
+    </tr>
+    <tr>
+        <td>{{ item.crawler_type }}</td>
+        <td>{{ item.hour }}</td>
+        <td>{{ item.works_count }}</td>
+        <td>{{ item.error_count }}</td>
+        <td>{{ item.created_at }}</td>
+        <td>{{ item.updated_at }}</td>
+    </tr>
+{% endfor %}
+</table>
+
+</body>
+</html>
